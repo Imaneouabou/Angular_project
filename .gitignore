@@ -40,3 +40,29 @@ testem.log
 # System files
 .DS_Store
 Thumbs.db
+
+
+# Node modules
+node_modules/
+
+# Angular build output
+dist/
+build/
+
+# Environment variables
+.env
+
+# IDE and OS specific files
+.vscode/
+.idea/
+.DS_Store
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Compiled files
+*.class
+*.js.map
+
