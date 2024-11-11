@@ -1,0 +1,52 @@
+stages:
+  - compile
+  - test
+  - docker
+
+include:
+  - template: Jobs/SAST.gitlab-ci.yml
+  - template: Jobs/Dependency-Scanning.gitlab-ci.yml
+  - template: Jobs/Container-Scanning.gitlab-ci.yml
+
+variables:
+  STATIC_ADDRESS: "http://" # Address to deploy application
+  SKIP_SAST: "false" # Ensure this is false to run SAST
+  SKIP_CONTAINER_SCAN: "false"
+  SKIP_SCA: "false" # Ensure this is false to run SCA
+  DEPENDENCY_SCANNING_DISABLED: "true" # Variable for GitLab-managed SCA
+  SAST_DISABLED: "true"
+  CONTAINER_SCANNING_DISABLED: "true"
+
+compile:
+  stage: compile
+  image: node:20.17.0-alpine
+  script:
+    - npm install
+    - npm run build
+  artifacts:
+    paths:
+      - node_modules/ # Share the installed dependencies
+      - dist/ # Share the build artifacts
+    expire_in: 1 hour
+
+unit_test:
+  stage: test
+  image: node:20.17.0-alpine
+  dependencies:
+    - compile
+  script:
+    - npm run test
+
+docker-build-and-push:
+  stage: docker
+  image: docker:latest
+  services:
+    - docker:dind
+  before_script:
+    - echo "Logging in to Docker Hub..."
+    - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+  script:
+    - echo "Building Docker image..."
+    - docker build -t $DOCKER_USERNAME/angular_pipeline:latest .
+    - echo "Pushing Docker image to Docker Hub..."
+    - docker push $DOCKER_USERNAME/angular_pipeline:latest
